@@ -25,7 +25,11 @@ class CategoryBloc extends Cubit<CategoryState> {
 
   CollectionReference categories =
       FirebaseFirestore.instance.collection("categories");
-  CollectionReference games = FirebaseFirestore.instance.collection("newGames");
+  StreamSubscription<DocumentSnapshot<Object?>>? gameStream;
+  StreamSubscription<QuerySnapshot<Object?>>? categoriesStream;
+  StreamSubscription<QuerySnapshot<Object?>>? tapStream;
+  CollectionReference newGames =
+  FirebaseFirestore.instance.collection("newGames");
 
   Future<void> getCategories() async {
     categoriesStream = categories.snapshots().listen((event) {
@@ -41,92 +45,10 @@ class CategoryBloc extends Cubit<CategoryState> {
           gameCategories.add(element);
         }
       }}
-      List<CategoryModel> tempList = [];
-      for (var element in gameCategories) {
-        List<TapModel> catTaps = state.tapResults
-            .where((element1) => element.id == element1.categoryId)
-            .toList();
-        int taps = 0;
-        for (var element in catTaps) {
-          taps = element.tapCount;
-        }
-        CategoryModel tempCat = element;
-        tempCat.tapCount = taps;
-        tempList.add(tempCat);
-      }
+      List<CategoryModel> tempList = getCatTaps(state.tapResults);
       emit(state.copyWith(testCategories: tempList,categories: gameCategories));
-     state.testCategories.forEach((element) {
-       print(element.tapCount);
-       print("get categories");
-     });
     });
   }
-
-  manageCategories(List<TapModel> tapResults) async {
-    print("in manage");
-    List<CategoryModel> tempList = [];
-    for (var element in state.categories) {
-      List<TapModel> catTaps = tapResults
-          .where((element1) => element.id == element1.categoryId)
-          .toList();
-      int taps = 0;
-      for (var element in catTaps) {
-        taps = element.tapCount;
-      }
-      CategoryModel tempCat = element;
-      tempCat.tapCount = taps;
-      tempList.add(tempCat);
-    }
-    emit(state.copyWith(testCategories: tempList));
-    print(tempList.first.tapCount);
-  }
-
-  categoriesAnimation(List<CategoryModel> categories) async {
-    emit(state.copyWith(isStart: true));
-     categories.forEach((element) async {
-      print(element.tapCount);
-      print("element taps");
-        CategoryModel? tempModel = state.jumpingCategories
-          .where((jumpCat) => element.id == jumpCat.id)
-          .firstOrNull;
-      int diff = element.tapCount;
-      if (tempModel != null) {
-        diff = element.tapCount - tempModel.tapCount;
-        }
-      double percentValue = diff / 6;
-      for (var e = 0; e < 6; e++) {
-        state.finalCategories
-            .removeWhere((element1) => element1.id == element.id);
-      List<CategoryModel> fTemp = state.finalCategories;
-        CategoryModel fModel = element;
-        if (tempModel != null) {
-          fModel.tapCount =
-              (tempModel.tapCount + percentValue * (e + 1)).toInt();
-          } else {
-          fModel.tapCount = (percentValue * (e + 1)).toInt();
-        }
-        fTemp.add(fModel);
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (e > 2) {
-          emit(state.copyWith(
-            bottomPosition: state.bottomPosition - 3,finalCategories: fTemp
-          ));
-        } else {
-          emit(state.copyWith(
-            bottomPosition: state.bottomPosition + 3,finalCategories: fTemp
-          ));
-        }
-      }
-    }
-    );
-    emit(state.copyWith(jumpingCategories: state.testCategories));
-  // }
-  }
-  StreamSubscription<DocumentSnapshot<Object?>>? gameStream;
-  StreamSubscription<QuerySnapshot<Object?>>? categoriesStream;
-  StreamSubscription<QuerySnapshot<Object?>>? tapStream;
-  CollectionReference newGames =
-  FirebaseFirestore.instance.collection("newGames");
 
   void getNGames() async {
     gameStream = newGames.doc("Ag5qPTkx2NJanYP0P6Xq").snapshots().listen((element) async {
@@ -144,7 +66,7 @@ class CategoryBloc extends Cubit<CategoryState> {
     return state.categories.where((element) => element.id == id).first;
   }
   getTapResults() async {
-   tapStream = games
+   tapStream = newGames
         .doc("Ag5qPTkx2NJanYP0P6Xq")
         .collection("tapResults")
         .snapshots()
@@ -156,8 +78,45 @@ class CategoryBloc extends Cubit<CategoryState> {
       }
       List<CategoryModel> temp = getCatTaps(tapResults);
       emit(state.copyWith(tapResults: tapResults,testCategories: temp));
+      catAnimations(temp);
+      emit(state.copyWith(jumpingCategories: temp));
       // if(!state.isStart)
-      categoriesAnimation(temp);
+      // categoriesAnimation(temp);
+    });
+  }
+
+  void catAnimations(List<CategoryModel> temp) {
+    temp.forEach((element) async {
+      CategoryModel? tempModel = state.jumpingCategories
+          .where((jumpCat) => element.id == jumpCat.id)
+          .firstOrNull;
+      int diff = element.tapCount;
+      if (tempModel != null) {
+        diff = element.tapCount - tempModel.tapCount;
+        state.jumpingCategories.removeWhere((element1) => element1.id==element.id);
+      }
+      double percentValue = diff / 6;
+      for (var e = 0; e < 6; e++) {
+        List<CategoryModel> fTemp = state.finalCategories;
+        CategoryModel fModel = element;
+        if (tempModel != null) {
+          fModel.tapCount =
+              (tempModel.tapCount + percentValue * (e + 1)).toInt();
+        } else {
+          fModel.tapCount = (percentValue * (e + 1)).toInt();
+        }
+        fTemp.add(fModel);
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (e > 2) {
+          emit(state.copyWith(
+              bottomPosition: state.bottomPosition - 3,finalCategories: fTemp
+          ));
+        } else {
+          emit(state.copyWith(
+              bottomPosition: state.bottomPosition + 3,finalCategories: fTemp
+          ));
+        }
+      }
     });
   }
   List<CategoryModel> getCatTaps(List<TapModel> tapsList){
