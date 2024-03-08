@@ -19,7 +19,7 @@ class _ExternalScreenState extends State<ExternalScreen> {
   double? leftPosition;
   bool isJumping = false;
   late CategoryState categoryState;
-
+  List<CategoryModel> prevList = [];
   @override
   void dispose() {
     // TODO: implement dispose
@@ -42,57 +42,60 @@ class _ExternalScreenState extends State<ExternalScreen> {
       //     },
       //     child: const Text("Jump")),
       body: BlocBuilder<CategoryBloc, CategoryState>(
-          buildWhen: (previous, current) => previous != current,
+          // buildWhen: (previous, current) => previous != current,
           builder: (BuildContext context, catState) {
             categoryState = catState;
-            // List<CategoryModel> gameCategories = [];
-            // if (catState.currentGame != null) {
-            //   for (var element in catState.currentGame!.categories) {
-            //     CategoryModel? categoryModel = catState.categories
-            //         .where((element1) => element == element1.id)
-            //         .firstOrNull;
-            //     if (categoryModel != null) {
-            //       gameCategories.add(categoryModel);
-            //     }
-            //   }
+            // catState.testCategories.forEach((element) {
+            //   print(element.tapCount);
+            // });
+            // print(catState.isStart);
+            // if(catState.isStart ){
+            //   // prevList.forEach((element) {
+            //   //   print(element.tapCount);
+            //   //   print("prev");
+            //   // });
+            //   prevList = catState.testCategories;
+            //   print("object");
+            //   context.read<CategoryBloc>().catAnimations(prevList);
             // }
             return (categoryState.currentGame != null)
-                ? Column(
-                    children: [
-                      Stack(children: [
-                        Column(
-                          children: [
-                            const Image(
+                ? SingleChildScrollView(
+              child: Column(
+                      children: [
+                        Stack(children: [
+                          Column(
+                            children: [
+                              const Image(
+                                  image:
+                                      AssetImage("assets/images/background.png")),
+                              Image(
                                 image:
-                                    AssetImage("assets/images/background.png")),
-                            Image(
-                              image:
-                                  const AssetImage("assets/images/track.png"),
-                              width: width,
-                              height: 200,
-                              fit: BoxFit.fitHeight,
-                            )
-                          ],
-                        ),
-                        if (categoryState
-                            .currentGame!.categories.isNotEmpty) ...[
-                          for (var e = 0;
-                              e < categoryState.currentGame!.categories.length;
-                              e++)
-                            character(
-                                catState.bottomPosition + e * 100,
-                                categoryState.currentGame!.categories[e],
-                                "assets/images/char_1.png")
-                        ]
-                      ]),
-                      Expanded(
-                        child: Container(
+                                    const AssetImage("assets/images/track.png"),
+                                width: width,
+                                height: 200,
+                                fit: BoxFit.fitHeight,
+                              )
+                            ],
+                          ),
+                          if (categoryState
+                              .currentGame!.categories.isNotEmpty) ...[
+                            for (var e = 0;
+                                e < categoryState.currentGame!.categories.length;
+                                e++)
+                              character(
+                                  catState.bottomPosition + e * 50,
+                                  categoryState.currentGame!.categories[e],
+                                  "assets/images/char_1.png")
+                          ]
+                        ]),
+                        Container(
+                          height: 100,
                           color: const Color(0xff009145),
-                        ),
-                      )
-                    ],
-                  )
-                : const CircularProgressIndicator();
+                        )
+                      ],
+                    ),
+                )
+                : const Center(child: CircularProgressIndicator());
           }),
     );
   }
@@ -101,11 +104,13 @@ class _ExternalScreenState extends State<ExternalScreen> {
     CategoryModel? categoryModel = categoryState.finalCategories
         .where((element) => element.id == e)
         .firstOrNull;
+    // print("category model");
+    // print(categoryModel?.tapCount);
     // print(categoryModel.tapCount);
     return AnimatedPositioned(
         duration: const Duration(milliseconds: 50),
         bottom: bottomPosition,
-        left: (categoryModel != null) ? categoryModel.tapCount.toDouble() : 0,
+        left: (categoryModel != null) ? categoryModel.tapCount.toDouble()*5 : 10,
         // transform: M,
         child: const Image(
           image: AssetImage("assets/images/char_1.png"),
