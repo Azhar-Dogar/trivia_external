@@ -42,22 +42,9 @@ class _ExternalScreenState extends State<ExternalScreen> {
       //     },
       //     child: const Text("Jump")),
       body: BlocBuilder<CategoryBloc, CategoryState>(
-          // buildWhen: (previous, current) => previous != current,
+          // buildWhen: (previous, current) => previous.jumpingCategories != current.jumpingCategories,
           builder: (BuildContext context, catState) {
             categoryState = catState;
-            // catState.testCategories.forEach((element) {
-            //   print(element.tapCount);
-            // });
-            // print(catState.isStart);
-            // if(catState.isStart ){
-            //   // prevList.forEach((element) {
-            //   //   print(element.tapCount);
-            //   //   print("prev");
-            //   // });
-            //   prevList = catState.testCategories;
-            //   print("object");
-            //   context.read<CategoryBloc>().catAnimations(prevList);
-            // }
             return (categoryState.currentGame != null)
                 ? SingleChildScrollView(
               child: Column(

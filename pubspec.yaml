@@ -42,6 +42,7 @@ dependencies:
     git:
       url: https://github.com/hamzali4642/utility_extensions
   cloud_firestore: ^4.15.7
+  shared_preferences: ^2.2.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

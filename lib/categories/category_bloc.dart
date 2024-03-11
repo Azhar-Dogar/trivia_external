@@ -61,7 +61,7 @@ class CategoryBloc extends Cubit<CategoryState> {
     return state.categories.where((element) => element.id == id).first;
   }
   getTapResults() async {
-    List<CategoryModel> initial = [];
+
    tapStream = newGames
         .doc("oPAYblY1lvgiAZNSDAYk")
         .collection("tapResults")
@@ -72,51 +72,79 @@ class CategoryBloc extends Cubit<CategoryState> {
       for (var element in event.docs) {
        tapResults.add(TapModel.fromJson(element.data()));
       }
+         // print(state.jumpingCategories.length);
+         // state.jumpingCategories.forEach((element) {
+         //   print(element.tapCount);
+         //   print("t");
+         // });
       List<CategoryModel> temp = getCatTaps(tapResults);
       catAnimations(temp);
-
+         // emit(state.copyWith(jumpingCategories: temp));
+         // print(state.jumpingCategories.length);
+         // state.jumpingCategories.forEach((element) {
+         //   print(element.tapCount);
+         //   print("t");
+         // });
     });
   }
 
-  catAnimations(List<CategoryModel> temp) {
-    emit(state.copyWith(isStart: false));
-   List<CategoryModel> first = state.jumpingCategories;
-    temp.forEach((element) async {
-      CategoryModel? tempModel = first
-          .where((jumpCat) => element.id == jumpCat.id)
-          .firstOrNull;
-      int diff = element.tapCount;
-      if (tempModel != null) {
-        diff = element.tapCount - tempModel.tapCount;
-        first.removeWhere((element1) => element1.id==element.id);
-      }
-      double percentValue = diff / 6;
-      for (var e = 0; e < 6; e++) {
-        List<CategoryModel> fTemp = [];
-        for (var element in first) {
-          fTemp.add(element);
-        }
-        CategoryModel fModel = element;
-        if (tempModel != null) {
-          fModel.tapCount =
-              (tempModel.tapCount + percentValue * (e + 1)).toInt();
-        } else {
-          fModel.tapCount = (percentValue * (e + 1)).toInt();
-        }
-        fTemp.add(fModel);
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (e > 2) {
-          emit(state.copyWith(
-              bottomPosition: state.bottomPosition - 3,finalCategories: fTemp
-          ));
-        } else {
-          emit(state.copyWith(
-              bottomPosition: state.bottomPosition + 3,finalCategories: fTemp
-          ));
-        }
-      }
+  catAnimations(List<CategoryModel> temp) async {
+    state.jumpingCategories.forEach((element) {
+      print(element.tapCount);
+      print("jumping");
     });
-    emit(state.copyWith(jumpingCategories: temp));
+   List<CategoryModel> first = state.jumpingCategories;
+   for(var i=0;i<temp.length;i++){
+     CategoryModel? tempModel = first
+         .where((jumpCat) => temp[i].id == jumpCat.id)
+         .firstOrNull;
+     int diff = temp[i].tapCount;
+     if (tempModel != null) {
+       diff = temp[i].tapCount - tempModel.tapCount;
+       print(diff);
+       print("difference is here");
+       first.removeWhere((element1) => element1.id==temp[i].id);
+     }
+     List<CategoryModel> fTemp = [];
+     double percentValue = diff / 6;
+     for (var e = 0; e < 6; e++) {
+       // List<CategoryModel> fTemp = [];
+       // for (var element in first) {
+       //   fTemp.add(element);
+       // }
+       CategoryModel fModel = temp[i];
+       if (tempModel != null) {
+         fModel.tapCount =
+             (tempModel.tapCount + percentValue * (e + 1)).toInt();
+       } else {
+         fModel.tapCount = (percentValue * (e + 1)).toInt();
+         print(fModel.tapCount);
+       }
+       fTemp.add(fModel);
+       await Future.delayed(const Duration(milliseconds: 100)).then((value){
+       if (e > 2) {
+         emit(state.copyWith(
+             bottomPosition: state.bottomPosition - 3,finalCategories: fTemp
+         ));
+       } else {
+         emit(state.copyWith(
+             bottomPosition: state.bottomPosition + 3,finalCategories: fTemp
+         ));
+       }
+     });}
+     if(i+1==temp.length){
+       state.jumpingCategories.forEach((element) {
+         print(element.tapCount);
+         print("jumping2");
+       });
+       emit(state.copyWith(jumpingCategories: temp));
+       state.jumpingCategories.forEach((element) {
+         print(element.tapCount);
+         print("jumping3");
+       });
+       print("after loop");
+     }
+   }
   }
   List<CategoryModel> getCatTaps(List<TapModel> tapsList){
     List<CategoryModel> tempList = [];
@@ -126,7 +154,7 @@ class CategoryBloc extends Cubit<CategoryState> {
           .toList();
       int taps = 0;
       for (var element in catTaps) {
-        taps = element.tapCount;
+        taps = taps + element.tapCount;
       }
       CategoryModel tempCat = element;
       tempCat.tapCount = taps;
